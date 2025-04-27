@@ -30,7 +30,7 @@ Bot, her telefon numarası için ayrı bir log dosyası oluşturur ve şu format
 
 2. **Projeyi İndirme**
    ```
-   git clone [https://github.com/fenoking/whatsapp-ai-bot](https://github.com/fenokingtr/FenoAI_WhatsAppBOT).git
+   git clone https://github.com/fenokingtr/FenoAI_WhatsAppBOT.git
    cd whatsapp-ai-bot
    ```
 
