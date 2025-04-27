@@ -30,7 +30,7 @@ Bot, her telefon numarası için ayrı bir log dosyası oluşturur ve şu format
 
 2. **Projeyi İndirme**
    ```
-   git clone https://github.com/fenoking/whatsapp-ai-bot.git
+   git clone [https://github.com/fenoking/whatsapp-ai-bot](https://github.com/fenokingtr/FenoAI_WhatsAppBOT).git
    cd whatsapp-ai-bot
    ```
 
@@ -96,20 +96,19 @@ const prompt = `Sen yardımcı bir WhatsApp asistanısın. Soruları nazik ve bi
 ### Premium Sistem
 
 Premium abonelik sistemi yakında eklenecektir ve şu özellikleri içerecektir:
-- **Çoklu Model Desteği**: Farklı yapay zeka modelleri arasında seçim yapabilme
+- **Premium kullanıcı**: Sınırsız erişim
 - **Grup Desteği**: Grup sohbetlerinde de yapay zekanın yanıt vermesi
 - **Zamanlı Mesajlar**: Belirli zamanlarda otomatik mesaj gönderme
 - **Medya Anlama**: Resim ve ses dosyalarını anlayıp yanıt üretme
-- **Özelleştirilmiş Sesler**: Farklı kişilikler ve dil stilleri
 
 Premium abonelik ücreti, seçilen paket ve özelliklere bağlı olarak değişecektir.
 
 ## İletişim
 
 Botla ilgili sorularınız veya geri bildirimleriniz için:
-- GitHub: https://github.com/fenoking
-- E-posta: iletisim@fenoai.com
+- GitHub: https://github.com/fenokingtr
+- E-posta: bedr60kkc@gmail.com
 
 ## Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakın. 
+Detaylar için LICENSE dosyasına bakın. 
