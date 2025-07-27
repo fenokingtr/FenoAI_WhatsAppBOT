@@ -50,8 +50,8 @@ Bu sayede bot:
 
 2. **Projeyi İndirme**
    ```
-   git clone https://github.com/fenoking/whatsapp-ai-bot.git
-   cd whatsapp-ai-bot
+   git clone https://github.com/fenokingtr/FenoAI_WhatsAppBOT.git
+   cd FenoAI_WhatsAppBOT
    ```
 
 3. **Gerekli Paketleri Yükleme**
