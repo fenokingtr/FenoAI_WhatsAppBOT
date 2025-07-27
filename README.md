@@ -57,6 +57,11 @@ Bu sayede bot:
 3. **Gerekli Paketleri Yükleme**
    ```
    npm install
+   # Önce mevcut sürümü kaldırın
+   npm uninstall whatsapp-web.js
+
+   # En son kararlı sürümü yükleyin
+   npm install whatsapp-web.js@latest
    ```
 
 4. **Yapılandırma**
@@ -96,7 +101,7 @@ Bu sayede bot:
 `index.js` dosyasında aşağıdaki kısmı değiştirerek botun kişiliğini özelleştirebilirsiniz:
 
 ```javascript
-const systemPrompt = `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki askerlik arkadaşı gibi bir samimiyetle cevapla. 
+const systemPrompt = `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabşlirsin. 
 AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
 
 Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Aynı soruyu tekrar sorarsa "Bunu daha önce konuşmuştuk" gibi ifadeler kullanabilirsin.`;
