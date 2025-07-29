@@ -336,11 +336,48 @@ const historyContext = conversationHistory
 ## Sorun Giderme
 
 - **QR Kod Görünmüyor**: Chromium bağımlılıklarının doğru yüklendiğinden emin olun
+- **Puppeteer Protocol Error**: 
+  - `.env` dosyasında `PUPPETEER_HEADLESS=false` deneyin
+  - `PUPPETEER_TIMEOUT=120000` ile timeout süresini artırın
+  - Antivirus yazılımının Chromium'u engellemediğinden emin olun
+  - Windows Defender'da WhatsApp bot klasörünü istisna listesine ekleyin
+- **Execution Context Destroyed**: 
+  - Bot otomatik olarak yeniden başlatılacak
+  - Sürekli tekrarlanırsa sistem kaynaklarını kontrol edin
+  - Chrome/Chromium süreçlerini Task Manager'dan sonlandırıp tekrar deneyin
 - **API Hatası**: Google Gemini API anahtarınızın doğru ve aktif olduğunu kontrol edin
+- **Quota/Limit Hatası**: 
+  - Ücretsiz sınırına ulaştıysanız `.env` dosyasında `GEMINI_MODEL=gemini-1.5-flash` kullanın
+  - API kotanızın yenilenmesini bekleyin
+  - Daha az token kullanan modelleri tercih edin
+- **Bot Etiketi Hatası**: `.env` dosyasında `BOT_TAG=@FenoAI` ayarlı olduğundan emin olun
 - **Bağlantı Sorunları**: WhatsApp'ın web sürümüne erişebildiğinizi doğrulayın
 - **Hafıza Yükleme Hatası**: Log dosyalarının doğru formatta olduğunu kontrol edin
 - **Yavaş Yanıt**: Çok uzun geçmiş konuşmalar hafıza boyutunu artırabilir, log dosyalarını temizleyebilirsiniz
 - **Tutarsız Cevaplar**: Bot yeniden başlatıldığında geçmiş konuşmalar otomatik olarak yüklenir
+
+### Puppeteer Sorunları İçin Özel Çözümler:
+```env
+# Debug için tarayıcıyı görünür hale getirin
+PUPPETEER_HEADLESS=false
+
+# Timeout süresini artırın (120 saniye)
+PUPPETEER_TIMEOUT=120000
+```
+
+**Windows'ta Yaygın Sorun:** Antivirus yazılımı Puppeteer'ı engelleyebilir. WhatsApp bot klasörünü antivirus istisna listesine ekleyin.
+
+### Model Önerileri Quota Sorunları İçin:
+```env
+# En düşük maliyet (ÜCRETLİ ama ekonomik)
+GEMINI_MODEL=gemini-1.5-flash
+
+# Orta performans (ÜCRETLİ)  
+GEMINI_MODEL=gemini-2.0-flash-lite
+
+# Yüksek performans (ÜCRETLİ ama pahalı)
+GEMINI_MODEL=gemini-2.5-pro
+```
 
 ## Yakında Eklenecek Özellikler
 

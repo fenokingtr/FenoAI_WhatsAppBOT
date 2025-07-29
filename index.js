@@ -18,6 +18,8 @@ if (!process.env.GEMINI_API_KEY) {
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
 const BOT_TAG = process.env.BOT_TAG || '@FenoAI';
+const PUPPETEER_HEADLESS = process.env.PUPPETEER_HEADLESS === 'false' ? false : true;
+const PUPPETEER_TIMEOUT = parseInt(process.env.PUPPETEER_TIMEOUT) || 60000;
 const BOT_PROMPT = process.env.BOT_PROMPT || `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
 AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
 Eğer o Kim Denilirse "Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. 
@@ -29,6 +31,7 @@ Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne ç�
 console.log(`Kullanılan Gemini modeli: ${GEMINI_MODEL}`);
 console.log(`Resim oluşturma modeli: ${IMAGE_GENERATION_MODEL}`);
 console.log(`Bot etiketi: ${BOT_TAG}`);
+console.log(`Puppeteer ayarları: Headless=${PUPPETEER_HEADLESS}, Timeout=${PUPPETEER_TIMEOUT}ms`);
 
 // Resim oluşturma isteği kontrolü için anahtar kelimeler
 const IMAGE_KEYWORDS = [
@@ -154,18 +157,28 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Initialize WhatsApp client with better error handling for Puppeteer
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({
+        dataPath: './wwebjs_auth'
+    }),
     puppeteer: { 
-        headless: true,
+        headless: PUPPETEER_HEADLESS,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-accelerated-2d-canvas',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
-        ]
+            '--disable-gpu',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-background-networking'
+        ],
+        timeout: PUPPETEER_TIMEOUT,
+        ignoreDefaultArgs: ['--disable-extensions']
     }
 });
 
@@ -176,8 +189,25 @@ client.on('auth_failure', msg => {
 
 client.on('disconnected', (reason) => {
     console.log('WhatsApp bağlantısı kesildi:', reason);
-    console.log('Yeniden bağlanmaya çalışılıyor...');
-    client.initialize();
+    console.log('5 saniye sonra yeniden bağlanmaya çalışılıyor...');
+    setTimeout(() => {
+        try {
+            client.initialize();
+        } catch (error) {
+            console.error('Yeniden bağlanma hatası:', error);
+        }
+    }, 5000);
+});
+
+// Puppeteer hata yakalama
+client.on('error', (error) => {
+    console.error('WhatsApp client hatası:', error);
+    if (error.message.includes('Protocol error') || error.message.includes('Execution context')) {
+        console.log('Puppeteer bağlantı hatası algılandı. Yeniden başlatılıyor...');
+        setTimeout(() => {
+            process.exit(1); // PM2 veya benzeri process manager varsa otomatik restart yapacak
+        }, 2000);
+    }
 });
 
 // Generate QR code for WhatsApp Web
@@ -295,10 +325,20 @@ async function getGeminiResponse(userMessage, phoneNumber) {
             return 'Üzgünüm, AI servisine bağlanırken bir yetkilendirme hatası oluştu. Lütfen API anahtarını kontrol edin.';
         } else if (error.message.includes('PERMISSION_DENIED')) {
             return 'Üzgünüm, AI servisi için gerekli izinler bulunamadı.';
-        } else if (error.message.includes('RESOURCE_EXHAUSTED')) {
-            return 'Üzgünüm, AI servisi kullanım limitine ulaşıldı.';
+        } else if (error.message.includes('RESOURCE_EXHAUSTED') || error.message.includes('quota')) {
+            return `⚠️ Üzgünüm, AI servisi kullanım limitine ulaşıldı. 
+
+Şu anda kullanılan model: ${GEMINI_MODEL}
+Çözüm önerileri:
+1. Biraz bekleyip tekrar deneyin
+2. .env dosyasında ücretsiz bir model seçin (örn: gemma-3-4b-it)
+3. API kotanızın yenilenmesini bekleyin
+
+Ücretsiz modeller: gemma-3-1b-it, gemma-3-4b-it, gemma-3-12b-it`;
         } else if (error.message.includes('not found for API version')) {
             return 'Üzgünüm, AI servisi modeliyle ilgili bir sorun oluştu. Sistem yöneticisine bildirin.';
+        } else if (error.message.includes('INVALID_ARGUMENT')) {
+            return 'Üzgünüm, gönderilen mesaj formatı hatalı. Lütfen farklı bir şekilde deneyin.';
         }
         
         return 'Üzgünüm, cevap üretirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.';
@@ -332,6 +372,21 @@ Not: Resim oluşturma özelliği yakında tamamen aktif olacak. Şu anda metin t
 
     } catch (error) {
         console.error('Resim oluşturma hatası:', error);
+        
+        // Özel hata mesajları
+        if (error.message.includes('RESOURCE_EXHAUSTED') || error.message.includes('quota')) {
+            return `🎨 ⚠️ Resim oluşturma servisi kullanım limitine ulaşıldı.
+
+İsteğiniz: "${userMessage}"
+
+Çözüm önerileri:
+1. Biraz bekleyip tekrar deneyin
+2. Şu anda ${IMAGE_GENERATION_MODEL} modeli kullanılıyor
+3. API kotanızın yenilenmesini bekleyin
+
+Bu özellik geliştirme aşamasındadır. Metin tabanlı sorular için hala yardımcı olabilirim!`;
+        }
+        
         return `🎨 Üzgünüm, resim oluşturma isteğinizi şu anda işleyemiyorum. 
 
 İsteğiniz: "${userMessage}"
@@ -341,9 +396,40 @@ Bu özellik geliştirme aşamasındadır. Lütfen daha sonra tekrar deneyin veya
 }
 
 // Initialize the client with error handling
-try {
-    console.log('WhatsApp botu başlatılıyor...');
-    client.initialize();
-} catch (error) {
-    console.error('WhatsApp botu başlatılamadı:', error);
-} 
+async function startBot() {
+    try {
+        console.log('WhatsApp botu başlatılıyor...');
+        console.log('Puppeteer ayarları kontrol ediliyor...');
+        
+        await client.initialize();
+        console.log('Bot başarıyla başlatıldı!');
+    } catch (error) {
+        console.error('WhatsApp botu başlatılamadı:', error);
+        
+        if (error.message.includes('Protocol error') || error.message.includes('Execution context')) {
+            console.log('Puppeteer bağlantı hatası. 5 saniye sonra tekrar denenecek...');
+            setTimeout(startBot, 5000);
+        } else {
+            console.log('Kritik hata. Bot durduruluyor.');
+            process.exit(1);
+        }
+    }
+}
+
+// Global hata yakalama
+process.on('uncaughtException', (error) => {
+    console.error('Yakalanmamış hata:', error);
+    if (error.message.includes('Protocol error') || error.message.includes('Execution context')) {
+        console.log('Puppeteer hatası yakalandı. Bot yeniden başlatılıyor...');
+        setTimeout(() => {
+            process.exit(1);
+        }, 2000);
+    }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('İşlenmemiş promise reddi:', reason);
+});
+
+// Botu başlat
+startBot(); 
