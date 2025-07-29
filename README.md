@@ -107,11 +107,13 @@ Bu sayede bot:
    cd FenoAI_WhatsAppBOT
    ```
 
-3. **Gerekli Paketleri Yükleme**
+3. **Gerekli Paketleri Yükleme Ve Çalıştırma**
    ```
    npm install
    npm uninstall whatsapp-web.js
    npm install whatsapp-web.js@latest
+
+   npm start
    ```
 
 4. **Yapılandırma**
