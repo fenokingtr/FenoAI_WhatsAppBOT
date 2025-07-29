@@ -14,6 +14,29 @@ if (!process.env.GEMINI_API_KEY) {
     process.exit(1);
 }
 
+// Gemini modelini .env dosyasından oku veya varsayılanı kullan
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
+const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
+const BOT_PROMPT = process.env.BOT_PROMPT || `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
+AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
+Eğer o Kim Denilirse "Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. 
+Elde edilen bilgilere göre Bedrettin Kökcü, Tokat'ın Erbaa ilçesinde "FenoKingTR" adıyla web tasarım hizmetleri sunmaktadır. 
+Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne çıkmaktadır." Diyceksin
+
+Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Aynı soruyu tekrar sorarsa "Bunu daha önce konuşmuştuk" gibi ifadeler kullanabilirsin.`;
+
+console.log(`Kullanılan Gemini modeli: ${GEMINI_MODEL}`);
+console.log(`Resim oluşturma modeli: ${IMAGE_GENERATION_MODEL}`);
+
+// Resim oluşturma isteği kontrolü için anahtar kelimeler
+const IMAGE_KEYWORDS = [
+    'resim oluştur', 'görsel oluştur', 'fotoğraf oluştur', 'çiz', 'çizim yap',
+    'resim yap', 'görsel yap', 'şunu görsele çevir', 'bunu çiz',
+    'resim çiz', 'fotoğraf çek', 'görselleştir', 'imaj oluştur',
+    'picture', 'image', 'draw', 'create image', 'generate image',
+    'make a picture', 'visualize', 'illustration'
+];
+
 // Log dosyası için dizin oluştur
 const logsDirectory = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDirectory)) {
@@ -218,8 +241,17 @@ client.on('message', async (message) => {
 // Function to get a response from Gemini AI with conversation memory
 async function getGeminiResponse(userMessage, phoneNumber) {
     try {
-        // Gemini-1.5-pro modelini kullanıyoruz
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        // Resim oluşturma isteği kontrolü
+        const isImageRequest = IMAGE_KEYWORDS.some(keyword => 
+            userMessage.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        if (isImageRequest) {
+            return await generateImageResponse(userMessage, phoneNumber);
+        }
+
+        // Normal metin yanıtı için Gemini modelini kullan
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         
         // Geçmiş sohbet geçmişini al
         let conversationHistory = [];
@@ -230,17 +262,8 @@ async function getGeminiResponse(userMessage, phoneNumber) {
             conversationHistory = conversationMemory.get(phoneNumber);
         }
         
-        // Temel sistem mesajı
-        const systemPrompt = `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
-AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
-Eğer o Kim Denilirse "Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. 
-Elde edilen bilgilere göre Bedrettin Kökcü, Tokat'ın Erbaa ilçesinde "FenoKingTR" adıyla web tasarım hizmetleri sunmaktadır. 
-Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne çıkmaktadır." Diyceksin
-
-Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Aynı soruyu tekrar sorarsa "Bunu daha önce konuşmuştuk" gibi ifadeler kullanabilirsin.`;
-        
-        // Sohbet geçmişini dahil ederek prompt oluştur
-        let fullPrompt = systemPrompt;
+        // Temel sistem mesajı (.env dosyasından)
+        let fullPrompt = BOT_PROMPT;
         
         if (conversationHistory.length > 0) {
             fullPrompt += '\n\nGeçmiş konuşmalarımız:\n';
@@ -277,6 +300,41 @@ Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne ç�
         }
         
         return 'Üzgünüm, cevap üretirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.';
+    }
+}
+
+// Resim oluşturma fonksiyonu
+async function generateImageResponse(userMessage, phoneNumber) {
+    try {
+        console.log(`Resim oluşturma isteği algılandı: ${userMessage}`);
+        
+        // Resim oluşturma modeli
+        const imageModel = genAI.getGenerativeModel({ model: IMAGE_GENERATION_MODEL });
+        
+        // Resim oluşturma prompt'u hazırla
+        const imagePrompt = `Lütfen şu açıklamaya göre bir resim oluştur: ${userMessage}
+        
+Resim yüksek kaliteli, detaylı ve açıklamaya uygun olmalıdır. Eğer Türkçe bir açıklama varsa, onu İngilizce'ye çevirerek resmi oluştur.`;
+
+        const result = await imageModel.generateContent([imagePrompt]);
+        const response = await result.response;
+        
+        // Resim oluşturuldu mesajı
+        return `🎨 Resim oluşturma isteğiniz işleniyor! 
+
+Bu özellik şu anda geliştirme aşamasındadır. Resim oluşturma işlemi için özel bir Gemini modeli (${IMAGE_GENERATION_MODEL}) kullanılıyor.
+
+İsteğiniz: "${userMessage}"
+
+Not: Resim oluşturma özelliği yakında tamamen aktif olacak. Şu anda metin tabanlı yanıtlar veriyorum.`;
+
+    } catch (error) {
+        console.error('Resim oluşturma hatası:', error);
+        return `🎨 Üzgünüm, resim oluşturma isteğinizi şu anda işleyemiyorum. 
+
+İsteğiniz: "${userMessage}"
+
+Bu özellik geliştirme aşamasındadır. Lütfen daha sonra tekrar deneyin veya metin tabanlı bir soru sorun.`;
     }
 }
 
