@@ -17,7 +17,7 @@ if (!process.env.GEMINI_API_KEY) {
 // Gemini modelini .env dosyasından oku veya varsayılanı kullan
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
-const BOT_TAG = process.env.BOT_TAG || '@FenoAI';
+const BOT_TAG = process.env.BOT_TAG || '';
 const PUPPETEER_HEADLESS = process.env.PUPPETEER_HEADLESS === 'false' ? false : true;
 const PUPPETEER_TIMEOUT = parseInt(process.env.PUPPETEER_TIMEOUT) || 60000;
 const BOT_PROMPT = process.env.BOT_PROMPT || `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
