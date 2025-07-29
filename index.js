@@ -350,25 +350,24 @@ async function generateImageResponse(userMessage, phoneNumber) {
     try {
         console.log(`Resim oluşturma isteği algılandı: ${userMessage}`);
         
-        // Resim oluşturma modeli
-        const imageModel = genAI.getGenerativeModel({ model: IMAGE_GENERATION_MODEL });
+        // Şimdilik resim oluşturma özelliği için bilgilendirici mesaj
+        const imageDescription = userMessage.replace(/resim oluştur|çiz|görsel|image/gi, '').trim();
         
-        // Resim oluşturma prompt'u hazırla
-        const imagePrompt = `Lütfen şu açıklamaya göre bir resim oluştur: ${userMessage}
-        
-Resim yüksek kaliteli, detaylı ve açıklamaya uygun olmalıdır. Eğer Türkçe bir açıklama varsa, onu İngilizce'ye çevirerek resmi oluştur.`;
+        return `🎨 **Resim Oluşturma İsteği Alındı!**
 
-        const result = await imageModel.generateContent([imagePrompt]);
-        const response = await result.response;
-        
-        // Resim oluşturuldu mesajı
-        return `🎨 Resim oluşturma isteğiniz işleniyor! 
+**İsteğiniz:** "${userMessage}"
 
-Bu özellik şu anda geliştirme aşamasındadır. Resim oluşturma işlemi için özel bir Gemini modeli (${IMAGE_GENERATION_MODEL}) kullanılıyor.
+🔧 **Durum:** Resim oluşturma özelliği şu anda geliştirme aşamasındadır.
 
-İsteğiniz: "${userMessage}"
+**Sebep:** \`${IMAGE_GENERATION_MODEL}\` modeli özel yapılandırma gerektiriyor ve henüz tamamen entegre edilmemiştir.
 
-Not: Resim oluşturma özelliği yakında tamamen aktif olacak. Şu anda metin tabanlı yanıtlar veriyorum.`;
+💡 **Alternatif Çözümler:**
+• DALL-E, Midjourney veya Stable Diffusion kullanabilirsiniz
+• Leonardo AI ile de benzer sonuçlar alabilirsiniz
+
+🚀 **Yakında:** Bu özellik tamamen aktif olacak ve direkt WhatsApp üzerinden resim oluşturabileceksiniz!
+
+Başka bir konuda yardımcı olabilir miyim?`;
 
     } catch (error) {
         console.error('Resim oluşturma hatası:', error);
