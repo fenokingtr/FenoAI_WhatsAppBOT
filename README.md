@@ -110,10 +110,7 @@ Bu sayede bot:
 3. **Gerekli Paketleri Yükleme**
    ```
    npm install
-   # Önce mevcut sürümü kaldırın
    npm uninstall whatsapp-web.js
-
-   # En son kararlı sürümü yükleyin
    npm install whatsapp-web.js@latest
    ```
 
