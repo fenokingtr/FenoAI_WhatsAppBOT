@@ -19,7 +19,7 @@ if (!process.env.GEMINI_API_KEY) {
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
 const FILE_ANALYSIS_MODEL = process.env.FILE_ANALYSIS_MODEL || 'gemini-2.5-flash';
-const BOT_TAG = process.env.BOT_TAG || '';
+const BOT_TAG = process.env.BOT_TAG || '@FenoAI';
 const PUPPETEER_HEADLESS = process.env.PUPPETEER_HEADLESS === 'false' ? false : true;
 const PUPPETEER_TIMEOUT = parseInt(process.env.PUPPETEER_TIMEOUT) || 60000;
 const BOT_PROMPT = process.env.BOT_PROMPT || `Sen WhatsApp botusun. Soruları Sana Nasıl Davranılırsa sende ona o şekilde davranarak cavaplayacaksın. AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü nün WhatsApp ürettiği bir WhatsApp sohbet botu olduğunu belirteceksin. Eğer o Kim Denilirse Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. Elde edilen bilgilere göre Bedrettin Kökcü, Tokatın Erbaa ilçesinde FenoKingTR adıyla web tasarım hizmetleri sunmaktadır. Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne çıkmaktadır. Diyceksin. Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Eğer aynı soruyu en az 3 kez sorarsa daha nekadar bu soruyu soracaksın benzeri şeyler yaz ama dozunu kaçırma her seferinde aynı şeyi deme.`;
