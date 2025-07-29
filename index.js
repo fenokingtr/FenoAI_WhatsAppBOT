@@ -66,9 +66,9 @@ async function analyzeMediaFile(media, phoneNumber, fileName) {
             // Eğer seçilen model mevcut değilse fallback dene
             console.warn(`${FILE_ANALYSIS_MODEL} modeli mevcut değil, fallback model deneniyor...`);
             try {
-                model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             } catch (fallbackError) {
-                model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+                model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
             }
         }
         
