@@ -158,7 +158,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Initialize WhatsApp client with better error handling for Puppeteer
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: './wwebjs_auth'
+        dataPath: './.wwebjs_auth'
     }),
     puppeteer: { 
         headless: PUPPETEER_HEADLESS,
