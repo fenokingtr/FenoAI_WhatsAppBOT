@@ -18,6 +18,7 @@ if (!process.env.GEMINI_API_KEY) {
 // Gemini modelini .env dosyasından oku veya varsayılanı kullan
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
+const FILE_ANALYSIS_MODEL = process.env.FILE_ANALYSIS_MODEL || 'gemini-2.5-flash';
 const BOT_TAG = process.env.BOT_TAG || '';
 const PUPPETEER_HEADLESS = process.env.PUPPETEER_HEADLESS === 'false' ? false : true;
 const PUPPETEER_TIMEOUT = parseInt(process.env.PUPPETEER_TIMEOUT) || 60000;
@@ -25,6 +26,7 @@ const BOT_PROMPT = process.env.BOT_PROMPT || `Sen WhatsApp botusun. Soruları Sa
 
 console.log(`Kullanılan Gemini modeli: ${GEMINI_MODEL}`);
 console.log(`Resim oluşturma modeli: ${IMAGE_GENERATION_MODEL}`);
+console.log(`Dosya analizi modeli: ${FILE_ANALYSIS_MODEL}`);
 console.log(`Bot etiketi: ${BOT_TAG}`);
 console.log(`Puppeteer ayarları: Headless=${PUPPETEER_HEADLESS}, Timeout=${PUPPETEER_TIMEOUT}ms`);
 console.log(`Girdi Mesajı: ${BOT_PROMPT}`);
@@ -49,6 +51,73 @@ const uploadsDirectory = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDirectory)) {
     fs.mkdirSync(uploadsDirectory);
     console.log('Uploads klasörü oluşturuldu:', uploadsDirectory);
+}
+
+// Dosya analizi fonksiyonu
+async function analyzeMediaFile(media, phoneNumber, fileName) {
+    try {
+        console.log(`Dosya analiz ediliyor: ${fileName}`);
+        
+        // Gemini Vision modelini kullan - .env dosyasından model seç
+        let model;
+        try {
+            model = genAI.getGenerativeModel({ model: FILE_ANALYSIS_MODEL });
+        } catch (error) {
+            // Eğer seçilen model mevcut değilse fallback dene
+            console.warn(`${FILE_ANALYSIS_MODEL} modeli mevcut değil, fallback model deneniyor...`);
+            try {
+                model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            } catch (fallbackError) {
+                model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+            }
+        }
+        
+        // Dosya türüne göre analiz promptu oluştur
+        let analysisPrompt = "";
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(fileExtension)) {
+            analysisPrompt = `Bu görüntüyü kısaca analiz et ve ne gördüğünü açıkla. Eğer bu bir oyun ekranıysa hangi oyun olduğunu söyle. Eğer bir uygulama ekranıysa ne uygulaması olduğunu belirt. Kısa ve öz bir açıklama yap. Türkçe cevap ver.`;
+        } else if (['pdf', 'txt', 'doc', 'docx'].includes(fileExtension)) {
+            analysisPrompt = `Bu bir ${fileExtension.toUpperCase()} belgesi. İçeriği hakkında genel bilgi ver.`;
+        } else if (['mp4'].includes(fileExtension)) {
+            analysisPrompt = `Bu bir video dosyası. Video içeriği hakkında bilgi ver.`;
+        } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
+            analysisPrompt = `Bu bir ses dosyası. Ses içeriği hakkında bilgi ver.`;
+        } else {
+            return `📄 **${fileExtension.toUpperCase()} Dosyası**\n\nDosya başarıyla kaydedildi.`;
+        }
+        
+        // Resim dosyaları için vision analizi
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(fileExtension)) {
+            const imagePart = {
+                inlineData: {
+                    data: media.data,
+                    mimeType: media.mimetype
+                }
+            };
+            
+            const result = await model.generateContent([analysisPrompt, imagePart]);
+            const analysisText = result.response.text();
+            
+            return `🖼️ **Görsel Analizi**\n\n${analysisText}`;
+        } else {
+            // Diğer dosya türleri için basit bilgi ver
+            return ``;
+        }
+        
+    } catch (error) {
+        console.error('Dosya analiz hatası:', error);
+        
+        // API hatalarına göre farklı mesajlar
+        if (error.message.includes('overloaded') || error.message.includes('503')) {
+            return `�️ **Görsel Alındı**\n\n AI servis yoğunluğu nedeniyle analiz şu anda yapılamıyor. Biraz sonra tekrar deneyin.`;
+        } else if (error.message.includes('quota') || error.message.includes('limit')) {
+            return `🖼️ **Görsel Alındı**\n\n AI servis limitine ulaşıldı. Analiz özelliği geçici olarak devre dışı.`;
+        } else {
+            return `📄 **Dosya Alındı**\n\n`;
+        }
+    }
 }
 
 // Dosya kaydetme fonksiyonu
@@ -107,7 +176,7 @@ async function saveMediaFile(message, phoneNumber) {
         };
         
     } catch (error) {
-        console.error('Dosya kaydedilirken hata:', error);
+        console.error('Dosya alınırken hata:', error);
         return null;
     }
 }
@@ -302,24 +371,18 @@ client.on('message', async (message) => {
                 fileInfo = await saveMediaFile(message, phoneNumber);
                 
                 if (fileInfo) {
-                    // Dosya başarıyla kaydedildi, kullanıcıya bilgi ver
-                    const fileMessage = `📁 **Dosya Kaydedildi!**
-
-📄 **Dosya Adı:** ${fileInfo.fileName}
-📊 **Boyut:** ${(fileInfo.fileSize / 1024).toFixed(2)} KB
-🔧 **Tür:** ${fileInfo.extension.toUpperCase()}
-📅 **Kaydedilme Tarihi:** ${new Date().toLocaleString('tr-TR')}
-
-✅ Dosyanız başarıyla uploads klasörüne kaydedildi.`;
+                    // Dosyayı analiz et ve kullanıcıya AI cevabı ver
+                    const media = await message.downloadMedia();
+                    const analysisResponse = await analyzeMediaFile(media, phoneNumber, fileInfo.fileName);
                     
-                    await message.reply(fileMessage);
+                    await message.reply(analysisResponse);
                     
                     // Dosya kaydını logla
-                    logMessage(phoneNumber, `[DOSYA] ${fileInfo.fileName} - ${fileInfo.mimeType}`, fileMessage);
+                    logMessage(phoneNumber, `[DOSYA] ${fileInfo.fileName} - ${fileInfo.mimeType}`, analysisResponse);
                     return;
                 } else {
                     // Dosya kaydedilemedi
-                    const errorMessage = "❌ Üzgünüm, bu dosya türünü desteklemiyorum veya dosya kaydedilirken bir hata oluştu.\n\n📋 **Desteklenen formatlar:**\n🖼️ Resimler: PNG, JPG, JPEG, GIF, WEBP\n📄 Belgeler: PDF, TXT, DOC, DOCX\n🎵 Ses: MP3, WAV, OGG\n🎬 Video: MP4";
+                    const errorMessage = "❌ Üzgünüm, bu dosya türünü desteklemiyorum veya dosya alınırken bir hata oluştu.\n\n📋 **Desteklenen formatlar:**\n🖼️ Resimler: PNG, JPG, JPEG, GIF, WEBP\n📄 Belgeler: PDF, TXT, DOC, DOCX\n🎵 Ses: MP3, WAV, OGG\n🎬 Video: MP4";
                     await message.reply(errorMessage);
                     logMessage(phoneNumber, message.body || "[DESTEKLENMEYEN DOSYA]", errorMessage);
                     return;

@@ -7,6 +7,8 @@ Gelen WhatsApp mesajlarını yapay zeka ile yanıtlayan, **dosya algılama ve ka
 ### 🆕 Yeni Özellikler (v2.0)
 - **📁 Akıllı Dosya Algılama**: Gelen tüm dosya türlerini otomatik algılar
 - **💾 Otomatik Dosya Kaydetme**: Desteklenen dosyaları uploads klasörüne kaydeder
+- **🤖 AI Dosya Analizi**: Gönderilen dosyaları AI ile analiz eder ve açıklar
+- **🖼️ Görsel Analizi**: Resimlerin içeriğini detaylı olarak açıklar
 - **📋 Geniş Format Desteği**: PNG, JPG, PDF, TXT, DOC, MP4, MP3 ve daha fazlası
 - **📅 Akıllı Dosya Adlandırma**: "gün-ay-yıl saat.dakika.saniye +telefon_no.uzantı" formatında
 - **🔍 MIME Type Algılama**: Dosya türlerini otomatik tanıma
@@ -57,19 +59,15 @@ gün-ay-yıl saat.dakika.saniye +telefon_numarası.uzantı
 2. **İndirme**: Dosya WhatsApp'tan indirilir
 3. **Tür Kontrolü**: MIME type ve uzantı kontrol edilir
 4. **Kaydetme**: `uploads/` klasörüne kaydedilir
-5. **Bilgilendirme**: Kullanıcıya detaylı bilgi verilir
+5. **AI Analizi**: Dosya içeriği yapay zeka ile analiz edilir
+6. **Akıllı Yanıt**: Kullanıcıya dosya içeriği hakkında detaylı bilgi verilir
 
 ### Kullanım Örneği
 ```
-Kullanıcı: [Bir resim gönderir]
-FenoAI: 📁 **Dosya Kaydedildi!**
+Kullanıcı: [Bir PUBG oyun ekranı gönderir]
+FenoAI: �️ **Görsel Analizi**
 
-📄 **Dosya Adı:** 29-07-2025 14.35.22 +905526675397.png
-📊 **Boyut:** 245.67 KB
-🔧 **Tür:** PNG
-📅 **Kaydedilme Tarihi:** 29.07.2025 14:35:22
-
-✅ Dosyanız başarıyla uploads klasörüne kaydedildi.
+Bu, PUBG Mobile oyununa ait bir maç sonu ekran görüntüsü. Ekranda "MVP" (Most Valuable Player - En Değerli Oyuncu) yazısı ve oyuncu istatistikleri görülüyor. Oyuncu "FenoKingTRZ" ismiyle MVP seçilmiş. Maçtaki skoru 34 kill, verdiği toplam hasar ise 3379. Oyuncunun rütbesi Platin V. Ekranda, beyaz ve mavi renkli kıyafet giyen kadın karakter avatarı görülüyor.
 ```
 
 ### Klasör Yapısı
@@ -196,6 +194,10 @@ Bu sayede bot:
    # Resim oluşturma modeli (varsayılan: gemini-2.0-flash-preview-image-generation)
    IMAGE_GENERATION_MODEL=gemini-2.0-flash-preview-image-generation
    
+   # Dosya analizi modeli (resim/dosya analizi için)
+   # Önerilen: gemini-1.5-flash (hızlı ve ekonomik)
+   FILE_ANALYSIS_MODEL=gemini-1.5-flash
+   
    # Bot etiketi (mesajların nasıl başlaması gerektiği, varsayılan: @FenoAI)
    BOT_TAG=@FenoAI
    
@@ -219,8 +221,9 @@ Bu sayede bot:
 ## 🔧 Yapılandırma Seçenekleri
 
 ### Model Seçimi
-`.env` dosyasında `GEMINI_MODEL` değişkenini değiştirerek farklı modeller kullanabilirsiniz:
+`.env` dosyasında farklı modeller kullanabilirsiniz:
 
+#### Ana Sohbet Modeli
 ```env
 # Performans odaklı (hızlı ve ekonomik)
 GEMINI_MODEL=gemini-2.5-flash-lite
@@ -233,6 +236,18 @@ GEMINI_MODEL=gemini-2.0-flash-preview-image-generation
 
 # Ücretsiz seçenekler
 GEMINI_MODEL=gemma-3-4b-it
+```
+
+#### Dosya Analizi Modeli
+```env
+# Önerilen (hızlı ve ekonomik)
+FILE_ANALYSIS_MODEL=gemini-1.5-flash
+
+# Daha kaliteli analiz (pahalı)
+FILE_ANALYSIS_MODEL=gemini-1.5-pro
+
+# En yeni teknoloji (en pahalı)
+FILE_ANALYSIS_MODEL=gemini-2.5-flash
 ```
 
 ### Resim Oluşturma Ayarları
@@ -309,17 +324,20 @@ Kullanıcı: @FenoAI Bugün hava nasıl?
 FenoAI: Hava durumu bilgisi veremem ama sana başka konularda yardım edebilirim! 😊
 ```
 
-### Dosya Gönderme ve Kaydetme
+### Dosya Gönderme ve AI Analizi
 ```
 Kullanıcı: [Bir PDF dosyası gönderir]
-FenoAI: 📁 **Dosya Kaydedildi!**
+FenoAI: � **PDF Dosyası Alındı**
 
-📄 **Dosya Adı:** 29-07-2025 14.35.22 +905526675397.pdf
-📊 **Boyut:** 1.25 MB
-🔧 **Tür:** PDF
-📅 **Kaydedilme Tarihi:** 29.07.2025 14:35:22
+Dosya başarıyla kaydedildi ve analiz için hazır.
+```
 
-✅ Dosyanız başarıyla uploads klasörüne kaydedildi.
+### Görsel Analizi
+```
+Kullanıcı: [Bir oyun ekranı gönderir]
+FenoAI: �️ **Görsel Analizi**
+
+Bu, PUBG Mobile oyununa ait bir maç sonu ekran görüntüsü. Ekranda "MVP" (Most Valuable Player - En Değerli Oyuncu) yazısı ve oyuncu istatistikleri görülüyor. Oyuncu "FenoKingTRZ" ismiyle MVP seçilmiş. Maçtaki skoru 34 kill, verdiği toplam hasar ise 3379. Oyuncunun rütbesi Platin V.
 ```
 
 ### Resim Oluşturma
@@ -536,8 +554,9 @@ Premium abonelik ücreti, seçilen paket ve özelliklere bağlı olarak değişe
 ## İletişim
 
 Botla ilgili sorularınız veya geri bildirimleriniz için:
-- GitHub: https://github.com/fenoking
-- E-posta: iletisim@fenoai.com
+- GitHub: https://github.com/fenokingtr
+- E-posta: bedrettinkokcu@gmail.com
+- Telefon:: +90 552 667 53 97
 
 ## Lisans
 
