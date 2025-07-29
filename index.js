@@ -17,6 +17,7 @@ if (!process.env.GEMINI_API_KEY) {
 // Gemini modelini .env dosyasından oku veya varsayılanı kullan
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0-flash-preview-image-generation';
+const BOT_TAG = process.env.BOT_TAG || '@FenoAI';
 const BOT_PROMPT = process.env.BOT_PROMPT || `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
 AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
 Eğer o Kim Denilirse "Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. 
@@ -27,6 +28,7 @@ Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne ç�
 
 console.log(`Kullanılan Gemini modeli: ${GEMINI_MODEL}`);
 console.log(`Resim oluşturma modeli: ${IMAGE_GENERATION_MODEL}`);
+console.log(`Bot etiketi: ${BOT_TAG}`);
 
 // Resim oluşturma isteği kontrolü için anahtar kelimeler
 const IMAGE_KEYWORDS = [
@@ -69,9 +71,9 @@ function loadConversationHistory(phoneNumber) {
                 if (sender === 'FenoAI') {
                     history.push({ role: 'assistant', content: message });
                 } else if (sender.startsWith('+')) {
-                    // @FenoAI etiketini kaldır
-                    const cleanMessage = message.replace(/^@FenoAI\s*/i, '').trim();
-                    if (cleanMessage && cleanMessage !== '@FenoAI etiketi yok') {
+                    // Bot etiketini kaldır
+                    const cleanMessage = message.replace(new RegExp(`^${BOT_TAG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'i'), '').trim();
+                    if (cleanMessage && cleanMessage !== `${BOT_TAG} etiketi yok`) {
                         history.push({ role: 'user', content: cleanMessage });
                     }
                 }
@@ -135,9 +137,9 @@ function logMessage(phoneNumber, message, aiResponse = null, isAIMessage = false
         if (aiResponse) {
             const aiLogEntry = `${dateFormat} ${timeFormat} <FenoAI>:"${aiResponse}"\n`;
             fs.appendFileSync(logFile, aiLogEntry);
-        } else if (!message.trim().startsWith('@FenoAI')) {
-            // Eğer mesaj @FenoAI ile başlamıyorsa, botun yanıt vermediğini log dosyasına ekle
-            const aiNoResponseEntry = `${dateFormat} ${timeFormat} <FenoAI>:"@FenoAI etiketi yok"\n`;
+        } else if (!message.trim().startsWith(BOT_TAG)) {
+            // Eğer mesaj bot etiketi ile başlamıyorsa, botun yanıt vermediğini log dosyasına ekle
+            const aiNoResponseEntry = `${dateFormat} ${timeFormat} <FenoAI>:"${BOT_TAG} etiketi yok"\n`;
             fs.appendFileSync(logFile, aiNoResponseEntry);
         }
     }
@@ -209,14 +211,14 @@ client.on('message', async (message) => {
             // Mesajı loglama
             logMessage(phoneNumber, message.body);
             
-            // Sadece "@FenoAI" ile başlayan mesajlara yanıt ver
-            if (!message.body.trim().startsWith('@FenoAI')) {
-                console.log('Mesaj "@FenoAI" ile başlamıyor, yanıtlanmıyor.');
+            // Sadece bot etiketi ile başlayan mesajlara yanıt ver
+            if (!message.body.trim().startsWith(BOT_TAG)) {
+                console.log(`Mesaj "${BOT_TAG}" ile başlamıyor, yanıtlanmıyor.`);
                 return;
             }
             
-            // "@FenoAI" etiketini kaldır
-            const userMessage = message.body.trim().replace(/^@FenoAI\s*/i, '').trim();
+            // Bot etiketini kaldır
+            const userMessage = message.body.trim().replace(new RegExp(`^${BOT_TAG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'i'), '').trim();
             
             // Get response from AI with conversation history
             const response = await getGeminiResponse(userMessage, phoneNumber);

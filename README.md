@@ -107,13 +107,14 @@ Bu sayede bot:
    cd FenoAI_WhatsAppBOT
    ```
 
-3. **Gerekli Paketleri Yükleme Ve Çalıştırma**
+3. **Gerekli Paketleri Yükleme**
    ```
    npm install
+   # Önce mevcut sürümü kaldırın
    npm uninstall whatsapp-web.js
-   npm install whatsapp-web.js@latest
 
-   npm start
+   # En son kararlı sürümü yükleyin
+   npm install whatsapp-web.js@latest
    ```
 
 4. **Yapılandırma**
@@ -126,6 +127,9 @@ Bu sayede bot:
    
    # Resim oluşturma modeli (varsayılan: gemini-2.0-flash-preview-image-generation)
    IMAGE_GENERATION_MODEL=gemini-2.0-flash-preview-image-generation
+   
+   # Bot etiketi (mesajların nasıl başlaması gerektiği, varsayılan: @FenoAI)
+   BOT_TAG=@FenoAI
    
    # Bot kişiliği (isteğe bağlı, varsayılan prompt kullanılır)
    BOT_PROMPT=Sen yardımcı bir WhatsApp asistanısın...
@@ -158,7 +162,17 @@ IMAGE_GENERATION_MODEL=gemini-2.0-flash-preview-image-generation
 
 ### Bot Kişiliği Özelleştirme
 ```env
-## 🔑 Google Gemini API Anahtarı Alma
+BOT_PROMPT=Senin özel prompt'un buraya gelir...
+```
+
+### Bot Etiketi Özelleştirme
+```env
+# Farklı etiketler kullanabilirsiniz
+BOT_TAG=@AI
+BOT_TAG=@Asistan
+BOT_TAG=@Yardımcı
+BOT_TAG=!bot
+```
 
 1. Google AI Studio'ya gidin: https://aistudio.google.com/
 2. Google hesabınızla giriş yapın
@@ -197,7 +211,7 @@ IMAGE_GENERATION_MODEL=gemini-2.0-flash-preview-image-generation
    - Bağlantı kurulduktan sonra bot hazır duruma geçecektir
 
 3. **Mesajlaşma**
-   - Bot'a mesaj göndermek için `@FenoAI` etiketini kullanın:
+   - Bot'a mesaj göndermek için ayarlanan etiketi kullanın (varsayılan: `@FenoAI`):
    ```
    @FenoAI Merhaba, nasılsın?
    @FenoAI Python hakkında bilgi ver
