@@ -1,15 +1,36 @@
 {
   "name": "whatsapp-ai-bot",
-  "version": "1.0.0",
-  "description": "WhatsApp bot that uses AI to respond to messages",
+  "version": "2.0.0",
+  "description": "Advanced WhatsApp AI Bot with file upload support and memory system",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node index.js",
+    "update-deps": "npm install whatsapp-web.js@latest @google/generative-ai@latest dotenv@latest mime-types@latest qrcode-terminal@latest"
   },
   "dependencies": {
     "@google/generative-ai": "^0.3.0",
     "dotenv": "^16.3.1",
+    "mime-types": "^3.0.1",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.31.0"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "ai",
+    "gemini",
+    "file-upload",
+    "chatbot",
+    "memory-system"
+  ],
+  "author": "FenoKingTR | Bedrettin Kökcü",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fenokingtr/FenoAI_WhatsAppBOT.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

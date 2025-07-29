@@ -1,9 +1,18 @@
-# WhatsApp Gemini AI Bot (FenoAI)
+# WhatsApp Gemini AI Bot (FenoAI) v2.0
 
-Gelen WhatsApp mesajlarını yapay zeka ile yanıtlayan, resim oluşturabilen, mesaj loglarını kaydeden ve daha birçok özelliğe sahip gelişmiş WhatsApp botudur.
+Gelen WhatsApp mesajlarını yapay zeka ile yanıtlayan, **dosya algılama ve kaydetme sistemi** bulunan, resim oluşturabilen, mesaj loglarını kaydeden ve daha birçok özelliğe sahip gelişmiş WhatsApp botudur.
 
 ## 🚀 Özellikler
 
+### 🆕 Yeni Özellikler (v2.0)
+- **📁 Akıllı Dosya Algılama**: Gelen tüm dosya türlerini otomatik algılar
+- **💾 Otomatik Dosya Kaydetme**: Desteklenen dosyaları uploads klasörüne kaydeder
+- **📋 Geniş Format Desteği**: PNG, JPG, PDF, TXT, DOC, MP4, MP3 ve daha fazlası
+- **📅 Akıllı Dosya Adlandırma**: "gün-ay-yıl saat.dakika.saniye +telefon_no.uzantı" formatında
+- **🔍 MIME Type Algılama**: Dosya türlerini otomatik tanıma
+- **📊 Dosya Bilgi Sistemi**: Boyut, tür ve tarih bilgileriyle birlikte kaydetme
+
+### 🎯 Mevcut Özellikler
 - **Çoklu AI Model Desteği**: Google Gemini ailesi modellerini (.env dosyasından seçilebilir)
 - **Akıllı Resim Oluşturma**: Gemini 2.0 Flash Preview ile görsel oluşturma
 - **Yapay Zeka Yanıtları**: Google Gemini modellerini kullanarak akıllı yanıtlar üretir
@@ -17,6 +26,63 @@ Gelen WhatsApp mesajlarını yapay zeka ile yanıtlayan, resim oluşturabilen, m
 - **Otomatik Yeniden Bağlanma**: Bağlantı koptuğunda otomatik olarak yeniden bağlanır
 - **Performans Optimizasyonu**: Her kişi için son 20 mesajı tutarak hafızayı optimize eder
 - **Özelleştirilebilir Prompt**: Bot kişiliği .env dosyasından ayarlanabilir
+
+## 📁 Dosya Sistemi ve Upload Özellikleri
+
+### Desteklenen Dosya Türleri
+Bot aşağıdaki dosya türlerini otomatik olarak algılar ve kaydeder:
+
+**🖼️ Resim Formatları:**
+- PNG, JPG, JPEG, GIF, WEBP
+
+**📄 Belge Formatları:**
+- PDF, TXT, DOC, DOCX
+
+**🎵 Ses Formatları:**
+- MP3, WAV, OGG
+
+**🎬 Video Formatları:**
+- MP4
+
+### Dosya Adlandırma Sistemi
+Gelen dosyalar otomatik olarak şu formatta adlandırılır:
+```
+gün-ay-yıl saat.dakika.saniye +telefon_numarası.uzantı
+```
+
+**Örnek:** `29-07-2025 14.35.22 +905526675397.png`
+
+### Dosya Kaydetme Süreci
+1. **Algılama**: Bot gelen mesajda dosya olup olmadığını kontrol eder
+2. **İndirme**: Dosya WhatsApp'tan indirilir
+3. **Tür Kontrolü**: MIME type ve uzantı kontrol edilir
+4. **Kaydetme**: `uploads/` klasörüne kaydedilir
+5. **Bilgilendirme**: Kullanıcıya detaylı bilgi verilir
+
+### Kullanım Örneği
+```
+Kullanıcı: [Bir resim gönderir]
+FenoAI: 📁 **Dosya Kaydedildi!**
+
+📄 **Dosya Adı:** 29-07-2025 14.35.22 +905526675397.png
+📊 **Boyut:** 245.67 KB
+🔧 **Tür:** PNG
+📅 **Kaydedilme Tarihi:** 29.07.2025 14:35:22
+
+✅ Dosyanız başarıyla uploads klasörüne kaydedildi.
+```
+
+### Klasör Yapısı
+```
+@FenoAI/
+├── uploads/           # Gelen dosyalar burada saklanır
+│   ├── <gün-ay-yıl> <saat.dakika.saniye> <Tel NO>.png
+│   ├── <gün-ay-yıl> <saat.dakika.saniye> <Tel NO>.pdf
+│   └── ...
+├── logs/             # Sohbet logları
+├── wwebjs_auth/      # WhatsApp oturum verileri
+└── index.js          # Ana bot dosyası
+```
 
 ## 🎨 Resim Oluşturma Sistemi
 
@@ -98,23 +164,25 @@ Bu sayede bot:
 ## Kurulum
 
 1. **Gereksinimler**
-   - Node.js (v12 veya üstü): https://nodejs.org/
+   - Node.js (v14 veya üstü): https://nodejs.org/
    - Google Gemini API anahtarı
 
 2. **Projeyi İndirme**
-   ```
+   ```bash
    git clone https://github.com/fenokingtr/FenoAI_WhatsAppBOT.git
    cd FenoAI_WhatsAppBOT
    ```
 
 3. **Gerekli Paketleri Yükleme**
-   ```
+   ```bash
+   # Tüm bağımlılıkları yükle
    npm install
-   # Önce mevcut sürümü kaldırın
-   npm uninstall whatsapp-web.js
-
-   # En son kararlı sürümü yükleyin
-   npm install whatsapp-web.js@latest
+   
+   # Veya paketleri manuel olarak yükle
+   npm install whatsapp-web.js@latest @google/generative-ai@latest dotenv@latest mime-types@latest qrcode-terminal@latest
+   
+   # En son sürümlere güncelle
+   npm run update-deps
    ```
 
 4. **Yapılandırma**
@@ -134,6 +202,19 @@ Bu sayede bot:
    # Bot kişiliği (isteğe bağlı, varsayılan prompt kullanılır)
    BOT_PROMPT=Sen yardımcı bir WhatsApp asistanısın...
    ```
+
+### 📦 Güncellenmiş Dependencies (v2.0)
+```json
+{
+  "dependencies": {
+    "@google/generative-ai": "^0.3.0",
+    "dotenv": "^16.3.1", 
+    "mime-types": "^3.0.1",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.31.0"
+  }
+}
+```
 
 ## 🔧 Yapılandırma Seçenekleri
 
@@ -228,6 +309,19 @@ Kullanıcı: @FenoAI Bugün hava nasıl?
 FenoAI: Hava durumu bilgisi veremem ama sana başka konularda yardım edebilirim! 😊
 ```
 
+### Dosya Gönderme ve Kaydetme
+```
+Kullanıcı: [Bir PDF dosyası gönderir]
+FenoAI: 📁 **Dosya Kaydedildi!**
+
+📄 **Dosya Adı:** 29-07-2025 14.35.22 +905526675397.pdf
+📊 **Boyut:** 1.25 MB
+🔧 **Tür:** PDF
+📅 **Kaydedilme Tarihi:** 29.07.2025 14:35:22
+
+✅ Dosyanız başarıyla uploads klasörüne kaydedildi.
+```
+
 ### Resim Oluşturma
 ```
 Kullanıcı: @FenoAI resim oluştur: sunset over mountains
@@ -242,6 +336,18 @@ FenoAI: Bunu daha önce söylememiştin, adını öğrenebilir miyim?
 (Daha sonra)
 Kullanıcı: @FenoAI Adımı hatırlıyor musun?
 FenoAI: Tabii ki! Sen [isim], bunu daha önce konuşmuştuk 😊
+```
+
+### Desteklenmeyen Dosya Türü
+```
+Kullanıcı: [.exe dosyası gönderir]
+FenoAI: ❌ Üzgünüm, bu dosya türünü desteklemiyorum veya dosya kaydedilirken bir hata oluştu.
+
+📋 **Desteklenen formatlar:**
+🖼️ Resimler: PNG, JPG, JPEG, GIF, WEBP
+📄 Belgeler: PDF, TXT, DOC, DOCX
+🎵 Ses: MP3, WAV, OGG
+🎬 Video: MP4
 ```
      `@FenoAI merhaba, bugün hava nasıl?`
    - Botun yanıtı otomatik olarak gönderilecektir
@@ -335,23 +441,45 @@ const historyContext = conversationHistory
 
 ## Sorun Giderme
 
+### Genel Sorunlar
 - **QR Kod Görünmüyor**: Chromium bağımlılıklarının doğru yüklendiğinden emin olun
+- **API Hatası**: Google Gemini API anahtarınızın doğru ve aktif olduğunu kontrol edin
+- **Bot Etiketi Hatası**: `.env` dosyasında `BOT_TAG=@FenoAI` ayarlı olduğundan emin olun
+- **Bağlantı Sorunları**: WhatsApp'ın web sürümüne erişebildiğinizi doğrulayın
+
+### Dosya Upload Sorunları
+- **Dosya Kaydedilmiyor**: 
+  - `uploads/` klasörünün yazma izinleri olduğunu kontrol edin
+  - Desteklenen dosya türü gönderdiğinizden emin olun
+  - Dosya boyutunun WhatsApp limitleri içinde olduğunu kontrol edin
+
+- **MIME Type Hatası**:
+  - `mime-types` paketinin doğru yüklendiğini kontrol edin: `npm list mime-types`
+  - Gerekirse yeniden yükleyin: `npm install mime-types@latest`
+
+- **Dosya İndirme Hatası**:
+  - İnternet bağlantınızı kontrol edin
+  - WhatsApp Web bağlantısının stabil olduğundan emin olun
+
+### Puppeteer Sorunları
 - **Puppeteer Protocol Error**: 
   - `.env` dosyasında `PUPPETEER_HEADLESS=false` deneyin
   - `PUPPETEER_TIMEOUT=120000` ile timeout süresini artırın
   - Antivirus yazılımının Chromium'u engellemediğinden emin olun
   - Windows Defender'da WhatsApp bot klasörünü istisna listesine ekleyin
+
 - **Execution Context Destroyed**: 
   - Bot otomatik olarak yeniden başlatılacak
   - Sürekli tekrarlanırsa sistem kaynaklarını kontrol edin
   - Chrome/Chromium süreçlerini Task Manager'dan sonlandırıp tekrar deneyin
-- **API Hatası**: Google Gemini API anahtarınızın doğru ve aktif olduğunu kontrol edin
+
+### API ve Model Sorunları  
 - **Quota/Limit Hatası**: 
   - Ücretsiz sınırına ulaştıysanız `.env` dosyasında `GEMINI_MODEL=gemini-1.5-flash` kullanın
   - API kotanızın yenilenmesini bekleyin
   - Daha az token kullanan modelleri tercih edin
-- **Bot Etiketi Hatası**: `.env` dosyasında `BOT_TAG=@FenoAI` ayarlı olduğundan emin olun
-- **Bağlantı Sorunları**: WhatsApp'ın web sürümüne erişebildiğinizi doğrulayın
+
+### Hafıza ve Log Sorunları
 - **Hafıza Yükleme Hatası**: Log dosyalarının doğru formatta olduğunu kontrol edin
 - **Yavaş Yanıt**: Çok uzun geçmiş konuşmalar hafıza boyutunu artırabilir, log dosyalarını temizleyebilirsiniz
 - **Tutarsız Cevaplar**: Bot yeniden başlatıldığında geçmiş konuşmalar otomatik olarak yüklenir
@@ -381,14 +509,27 @@ GEMINI_MODEL=gemini-2.5-pro
 
 ## Yakında Eklenecek Özellikler
 
-### Premium Sistem
+### v2.1 Güncellemesi
+- **🔍 Dosya Analizi**: Gönderilen dosyaların içeriğini AI ile analiz etme
+- **🖼️ Resim Analizi**: Gönderilen resimleri açıklama ve yorumlama
+- **📊 Dosya İstatistikleri**: Upload edilen dosyalar için detaylı istatistikler
+- **🗂️ Klasör Organizasyonu**: Dosyaları türlerine göre alt klasörlere ayırma
+- **📸 QR Kod Okuma**: Gönderilen resimlerdeki QR kodları okuma
 
+### v3.0 Premium Sistem
 Premium abonelik sistemi yakında eklenecektir ve şu özellikleri içerecektir:
 - **Çoklu Model Desteği**: Farklı yapay zeka modelleri arasında seçim yapabilme
 - **Grup Desteği**: Grup sohbetlerinde de yapay zekanın yanıt vermesi
 - **Zamanlı Mesajlar**: Belirli zamanlarda otomatik mesaj gönderme
-- **Medya Anlama**: Resim ve ses dosyalarını anlayıp yanıt üretme
+- **Gelişmiş Medya Anlama**: Video ve ses dosyalarını anlayıp yanıt üretme
 - **Özelleştirilmiş Sesler**: Farklı kişilikler ve dil stilleri
+- **Veri Senkronizasyonu**: Bulut tabanlı dosya yedekleme sistemi
+
+### Teknik İyileştirmeler
+- **⚡ Performans Optimizasyonu**: Dosya işleme hızının artırılması
+- **🔒 Güvenlik Güncellemeleri**: Dosya güvenlik kontrollerinin geliştirilmesi
+- **📱 Mobil Optimizasyon**: Mobil cihazlarda daha iyi performans
+- **🌐 Çoklu Dil Desteği**: İngilizce ve diğer dillerde arayüz
 
 Premium abonelik ücreti, seçilen paket ve özelliklere bağlı olarak değişecektir.
 

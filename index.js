@@ -1,9 +1,10 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
+const mime = require('mime-types');
 
 // Load environment variables
 dotenv.config();
@@ -20,18 +21,13 @@ const IMAGE_GENERATION_MODEL = process.env.IMAGE_GENERATION_MODEL || 'gemini-2.0
 const BOT_TAG = process.env.BOT_TAG || '';
 const PUPPETEER_HEADLESS = process.env.PUPPETEER_HEADLESS === 'false' ? false : true;
 const PUPPETEER_TIMEOUT = parseInt(process.env.PUPPETEER_TIMEOUT) || 60000;
-const BOT_PROMPT = process.env.BOT_PROMPT || `Sen yardımcı bir WhatsApp asistanısın. Soruları sanki günlük arkadaşınmış gibi tatlı ve sade bir dille cevaplayacaksın ayrıca arada kendini pekiştirmek için argo kullanabilirsin. 
-AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü'nün WhatsApp asistanıyım diye cevap ver. 
-Eğer o Kim Denilirse "Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. 
-Elde edilen bilgilere göre Bedrettin Kökcü, Tokat'ın Erbaa ilçesinde "FenoKingTR" adıyla web tasarım hizmetleri sunmaktadır. 
-Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne çıkmaktadır." Diyceksin
-
-Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Aynı soruyu tekrar sorarsa "Bunu daha önce konuşmuştuk" gibi ifadeler kullanabilirsin.`;
+const BOT_PROMPT = process.env.BOT_PROMPT || `Sen WhatsApp botusun. Soruları Sana Nasıl Davranılırsa sende ona o şekilde davranarak cavaplayacaksın. AYRICA SANA KİM OLDUĞUN SORULURSA SEN FenoAI, FenoKingTR | Bedrettin Kökcü nün WhatsApp ürettiği bir WhatsApp sohbet botu olduğunu belirteceksin. Eğer o Kim Denilirse Bedrettin Kökcü, internet üzerinde daha çok FenoKingTR adıyla tanınan bir web tasarımcısıdır. Elde edilen bilgilere göre Bedrettin Kökcü, Tokatın Erbaa ilçesinde FenoKingTR adıyla web tasarım hizmetleri sunmaktadır. Bu isim, kendisinin veya işletmesinin dijital alandaki markası olarak öne çıkmaktadır. Diyceksin. Önceki konuşmalarımızı da hatırla ve buna göre tutarlı cevaplar ver. Eğer aynı soruyu en az 3 kez sorarsa daha nekadar bu soruyu soracaksın benzeri şeyler yaz ama dozunu kaçırma her seferinde aynı şeyi deme.`;
 
 console.log(`Kullanılan Gemini modeli: ${GEMINI_MODEL}`);
 console.log(`Resim oluşturma modeli: ${IMAGE_GENERATION_MODEL}`);
 console.log(`Bot etiketi: ${BOT_TAG}`);
 console.log(`Puppeteer ayarları: Headless=${PUPPETEER_HEADLESS}, Timeout=${PUPPETEER_TIMEOUT}ms`);
+console.log(`Girdi Mesajı: ${BOT_PROMPT}`);
 
 // Resim oluşturma isteği kontrolü için anahtar kelimeler
 const IMAGE_KEYWORDS = [
@@ -46,6 +42,74 @@ const IMAGE_KEYWORDS = [
 const logsDirectory = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDirectory)) {
     fs.mkdirSync(logsDirectory);
+}
+
+// Uploads dosyası için dizin oluştur
+const uploadsDirectory = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDirectory)) {
+    fs.mkdirSync(uploadsDirectory);
+    console.log('Uploads klasörü oluşturuldu:', uploadsDirectory);
+}
+
+// Dosya kaydetme fonksiyonu
+async function saveMediaFile(message, phoneNumber) {
+    try {
+        // Mesajın medya içerip içermediğini kontrol et
+        if (!message.hasMedia) {
+            return null;
+        }
+
+        // Medya dosyasını indir
+        const media = await message.downloadMedia();
+        
+        if (!media) {
+            console.log('Medya dosyası indirilemedi.');
+            return null;
+        }
+
+        // Dosya türünü belirle
+        const mimeType = media.mimetype;
+        const extension = mime.extension(mimeType);
+        
+        if (!extension) {
+            console.log('Desteklenmeyen dosya türü:', mimeType);
+            return null;
+        }
+
+        // Desteklenen dosya türlerini kontrol et
+        const supportedTypes = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'doc', 'docx', 'mp4', 'mp3', 'wav', 'ogg'];
+        if (!supportedTypes.includes(extension.toLowerCase())) {
+            console.log('Desteklenmeyen dosya uzantısı:', extension);
+            return null;
+        }
+
+        // Dosya adını oluştur: "gün-ay-yıl saat.dakika.saniye +telefon_no.uzantı"
+        const now = new Date();
+        const dateFormat = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+        const timeFormat = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}.${now.getSeconds().toString().padStart(2, '0')}`;
+        const fileName = `${dateFormat} ${timeFormat} +${phoneNumber}.${extension}`;
+        
+        // Dosya yolunu oluştur
+        const filePath = path.join(uploadsDirectory, fileName);
+        
+        // Dosyayı kaydet
+        const buffer = Buffer.from(media.data, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        
+        console.log(`Dosya kaydedildi: ${fileName} (${(buffer.length / 1024).toFixed(2)} KB)`);
+        
+        return {
+            fileName: fileName,
+            filePath: filePath,
+            fileSize: buffer.length,
+            mimeType: mimeType,
+            extension: extension
+        };
+        
+    } catch (error) {
+        console.error('Dosya kaydedilirken hata:', error);
+        return null;
+    }
 }
 
 // Hafıza sistemi - her numara için sohbet geçmişi
@@ -231,6 +295,37 @@ client.on('message', async (message) => {
         console.log(`Mesaj alındı (${message.from}): ${message.body}`);
         
         try {
+            // Önce dosya kontrolü yap
+            let fileInfo = null;
+            if (message.hasMedia) {
+                console.log('Medya dosyası algılandı, kaydediliyor...');
+                fileInfo = await saveMediaFile(message, phoneNumber);
+                
+                if (fileInfo) {
+                    // Dosya başarıyla kaydedildi, kullanıcıya bilgi ver
+                    const fileMessage = `📁 **Dosya Kaydedildi!**
+
+📄 **Dosya Adı:** ${fileInfo.fileName}
+📊 **Boyut:** ${(fileInfo.fileSize / 1024).toFixed(2)} KB
+🔧 **Tür:** ${fileInfo.extension.toUpperCase()}
+📅 **Kaydedilme Tarihi:** ${new Date().toLocaleString('tr-TR')}
+
+✅ Dosyanız başarıyla uploads klasörüne kaydedildi.`;
+                    
+                    await message.reply(fileMessage);
+                    
+                    // Dosya kaydını logla
+                    logMessage(phoneNumber, `[DOSYA] ${fileInfo.fileName} - ${fileInfo.mimeType}`, fileMessage);
+                    return;
+                } else {
+                    // Dosya kaydedilemedi
+                    const errorMessage = "❌ Üzgünüm, bu dosya türünü desteklemiyorum veya dosya kaydedilirken bir hata oluştu.\n\n📋 **Desteklenen formatlar:**\n🖼️ Resimler: PNG, JPG, JPEG, GIF, WEBP\n📄 Belgeler: PDF, TXT, DOC, DOCX\n🎵 Ses: MP3, WAV, OGG\n🎬 Video: MP4";
+                    await message.reply(errorMessage);
+                    logMessage(phoneNumber, message.body || "[DESTEKLENMEYEN DOSYA]", errorMessage);
+                    return;
+                }
+            }
+            
             // Skip empty or too short messages
             if (!message.body || message.body.trim().length < 2) {
                 console.log('Mesaj çok kısa, yanıtlanmıyor.');
