@@ -560,4 +560,5 @@ Botla ilgili sorularınız veya geri bildirimleriniz için:
 
 ## Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakın. 
+Bu proje  AGPL-3.0 lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakın. 
+
